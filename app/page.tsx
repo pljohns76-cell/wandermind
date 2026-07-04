@@ -7,7 +7,23 @@ export default function Home() {
   const [journey, setJourney] = useState(null);
   const [error, setError] = useState(null);
   const [loadingMsg, setLoadingMsg] = useState(0);
+const [shareMsg, setShareMsg] = useState('');
 
+  async function handleShare() {
+    if (!journey) return;
+    const text = `✦ My WanderMind Journey\n${journey.profileTitle}\n📍 ${journey.destination}, ${journey.country}\n\n"${journey.tagline}"\n\nDiscover yours at trywandermind.com`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: 'My WanderMind Journey', text });
+      } else {
+        await navigator.clipboard.writeText(text);
+        setShareMsg('Copied to clipboard ✓');
+        setTimeout(() => setShareMsg(''), 2500);
+      }
+    } catch (e) {
+      // user cancelled the share sheet — no message needed
+    }
+  }
   const loadingMessages = [
     'Reading between your lines...',
     'Consulting the atlas...',
@@ -61,22 +77,25 @@ export default function Home() {
         <h1 style={{ fontFamily: 'Georgia, serif', fontSize: '56px', fontWeight: '600', lineHeight: '1.05', letterSpacing: '-0.02em', marginBottom: '40px' }}>
           Travel that knows<br />your <em style={{ color: '#8B7043' }}>soul</em>
         </h1>
-        <label style={{ fontSize: '9px', fontWeight: '600', letterSpacing: '0.3em', textTransform: 'uppercase', color: '#6B6B6B', display: 'block', marginBottom: '12px' }}>
+        <label style={{ fontSize: '13px', fontWeight: '600', letterSpacing: '0.3em', textTransform: 'uppercase', color: '#0D0D0D', display: 'block', marginBottom: '6px' }}>
           Where does your soul want to go?
         </label>
+        <div style={{ fontSize: '14px', color: '#6B6B6B', marginBottom: '12px' }}>
+          Describe your dream trip in your own words below.
+        </div>
         <div style={{ borderTop: '2px solid #0D0D0D', borderBottom: '2px solid #0D0D0D', padding: '22px 0', marginBottom: '16px' }}>
           <textarea
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); discover(); }}}
-            placeholder="Somewhere with old light and no itinerary. Maybe mountains. Maybe silence..."
+            placeholder="e.g. Somewhere with old light and no itinerary. Maybe mountains. Maybe silence..."
             rows={3}
             spellCheck={true}
             style={{ width: '100%', fontFamily: 'Georgia, serif', fontSize: '24px', fontStyle: 'italic', color: '#0D0D0D', background: 'transparent', border: 'none', outline: 'none', resize: 'none', caretColor: '#8B7043' }}
           />
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontSize: '11px', color: '#6B6B6B' }}>Write freely — the more honest, the more precise your journey becomes.</span>
+          <span style={{ fontSize: '14px', color: '#4A4A4A' }}>Write freely — the more honest, the more precise your journey becomes.</span>
           <button onClick={discover} disabled={loading || !input.trim()} style={{ fontSize: '10px', fontWeight: '600', letterSpacing: '0.25em', textTransform: 'uppercase', color: '#F7F4EF', background: loading ? '#D8D3CB' : '#0D0D0D', border: 'none', padding: '13px 26px', cursor: loading ? 'not-allowed' : 'pointer' }}>
             {loading ? 'Discovering...' : 'Reveal My Journey →'}
           </button>
@@ -149,10 +168,14 @@ export default function Home() {
             </div>
           </div>
 
-          <div style={{ marginTop: '24px', display: 'flex', gap: '12px' }}>
+          <div style={{ marginTop: '24px', display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <button onClick={handleShare} style={{ fontSize: '10px', fontWeight: '600', letterSpacing: '0.25em', textTransform: 'uppercase', color: '#F7F4EF', background: '#0D0D0D', border: '1px solid #0D0D0D', padding: '13px 26px', cursor: 'pointer' }}>
+              Share My Journey ↗
+            </button>
             <button onClick={() => { setJourney(null); setInput(''); window.scrollTo({top:0,behavior:'smooth'}); }} style={{ fontSize: '10px', fontWeight: '600', letterSpacing: '0.25em', textTransform: 'uppercase', color: '#0D0D0D', background: 'transparent', border: '1px solid #0D0D0D', padding: '13px 26px', cursor: 'pointer' }}>
               New Journey →
             </button>
+            {shareMsg && <span style={{ fontSize: '12px', color: '#8B7043' }}>{shareMsg}</span>}
           </div>
         </section>
       )}
