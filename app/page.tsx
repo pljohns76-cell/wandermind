@@ -28,6 +28,9 @@ export default function Home() {
     }
   }
 
+  const unsplashKey = process.env.NEXT_PUBLIC_UNSPLASH_ACCESS_KEY;
+  const heroPhoto = journey ? `https://api.unsplash.com/photos/random?query=${encodeURIComponent(journey.unsplashQuery || journey.destination)}&orientation=landscape&client_id=${unsplashKey}` : null;
+
   return (
     <main style={{ fontFamily: 'Georgia, serif', background: '#F7F4EF', minHeight: '100vh', color: '#0D0D0D' }}>
       <header style={{ borderBottom: '2px solid #0D0D0D', padding: '16px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
@@ -43,7 +46,6 @@ export default function Home() {
         <h1 style={{ fontFamily: 'Georgia, serif', fontSize: '56px', fontWeight: '600', lineHeight: '1.05', letterSpacing: '-0.02em', marginBottom: '40px' }}>
           Travel that knows<br />your <em style={{ color: '#8B7043' }}>soul</em>
         </h1>
-
         <label style={{ fontSize: '9px', fontWeight: '600', letterSpacing: '0.3em', textTransform: 'uppercase', color: '#6B6B6B', display: 'block', marginBottom: '12px' }}>
           Where does your soul want to go?
         </label>
@@ -54,25 +56,24 @@ export default function Home() {
             onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); discover(); }}}
             placeholder="Somewhere with old light and no itinerary. Maybe mountains. Maybe silence..."
             rows={3}
+            spellCheck={true}
             style={{ width: '100%', fontFamily: 'Georgia, serif', fontSize: '24px', fontStyle: 'italic', color: '#0D0D0D', background: 'transparent', border: 'none', outline: 'none', resize: 'none', caretColor: '#8B7043' }}
           />
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontSize: '11px', color: '#6B6B6B' }}>Write freely — the more honest, the more precise your journey becomes.</span>
-          <button
-            onClick={discover}
-            disabled={loading || !input.trim()}
-            style={{ fontSize: '10px', fontWeight: '600', letterSpacing: '0.25em', textTransform: 'uppercase', color: '#F7F4EF', background: loading ? '#D8D3CB' : '#0D0D0D', border: 'none', padding: '13px 26px', cursor: loading ? 'not-allowed' : 'pointer' }}
-          >
+          <button onClick={discover} disabled={loading || !input.trim()} style={{ fontSize: '10px', fontWeight: '600', letterSpacing: '0.25em', textTransform: 'uppercase', color: '#F7F4EF', background: loading ? '#D8D3CB' : '#0D0D0D', border: 'none', padding: '13px 26px', cursor: loading ? 'not-allowed' : 'pointer' }}>
             {loading ? 'Discovering...' : 'Reveal My Journey →'}
           </button>
         </div>
-
         {error && <div style={{ marginTop: '24px', color: '#c0392b', fontSize: '13px' }}>Error: {error}</div>}
       </section>
 
       {journey && (
         <section style={{ maxWidth: '900px', margin: '0 auto', padding: '0 32px 80px' }}>
+
+          <HeroImage query={journey.unsplashQuery || journey.destination} destination={journey.destination} country={journey.country} />
+
           <div style={{ background: '#0D0D0D', color: '#F7F4EF', padding: '40px', marginBottom: '3px' }}>
             <div style={{ fontSize: '9px', fontWeight: '600', letterSpacing: '0.3em', textTransform: 'uppercase', color: '#C4A96D', marginBottom: '8px' }}>{journey.archetypeLabel}</div>
             <div style={{ fontFamily: 'Georgia, serif', fontSize: '32px', fontWeight: '600', marginBottom: '12px' }}>{journey.profileTitle}</div>
@@ -93,6 +94,8 @@ export default function Home() {
               <p key={i} style={{ fontSize: '15px', fontWeight: '300', lineHeight: '1.85', color: '#1E1E1E', marginBottom: '16px' }}>{p}</p>
             ))}
           </div>
+
+          <PhotoGrid query={journey.unsplashQuery || journey.destination} />
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '3px', marginBottom: '3px' }}>
             {(journey.days || []).map((d, i) => (
@@ -124,12 +127,76 @@ export default function Home() {
           </div>
 
           <div style={{ marginTop: '24px', display: 'flex', gap: '12px' }}>
-            <button onClick={() => { setJourney(null); setInput(''); }} style={{ fontSize: '10px', fontWeight: '600', letterSpacing: '0.25em', textTransform: 'uppercase', color: '#0D0D0D', background: 'transparent', border: '1px solid #0D0D0D', padding: '13px 26px', cursor: 'pointer' }}>
+            <button onClick={() => { setJourney(null); setInput(''); window.scrollTo({top:0,behavior:'smooth'}); }} style={{ fontSize: '10px', fontWeight: '600', letterSpacing: '0.25em', textTransform: 'uppercase', color: '#0D0D0D', background: 'transparent', border: '1px solid #0D0D0D', padding: '13px 26px', cursor: 'pointer' }}>
               New Journey →
             </button>
           </div>
         </section>
       )}
     </main>
+  );
+}
+
+function HeroImage({ query, destination, country }) {
+  const [src, setSrc] = useState(null);
+  const [loaded, setLoaded] = useState(false);
+  const key = process.env.NEXT_PUBLIC_UNSPLASH_ACCESS_KEY;
+
+  useState(() => {
+    fetch(`https://api.unsplash.com/photos/random?query=${encodeURIComponent(query)}&orientation=landscape&client_id=${key}`)
+      .then(r => r.json())
+      .then(data => { if (data.urls) setSrc(data.urls.regular); })
+      .catch(() => {});
+  });
+
+  return (
+    <div style={{ position: 'relative', height: '480px', marginBottom: '3px', overflow: 'hidden', background: '#1a1a1a' }}>
+      {src && (
+        <img src={src} alt={destination} onLoad={() => setLoaded(true)}
+          style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: loaded ? 1 : 0, transition: 'opacity 1s ease' }} />
+      )}
+      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 30%, rgba(0,0,0,0.7) 100%)' }} />
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '32px 40px' }}>
+        <div style={{ fontSize: '9px', fontWeight: '600', letterSpacing: '0.28em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.8)', border: '1px solid rgba(255,255,255,0.3)', display: 'inline-block', padding: '4px 12px', marginBottom: '10px' }}>{country}</div>
+        <div style={{ fontFamily: 'Georgia, serif', fontSize: '56px', fontWeight: '700', color: '#fff', lineHeight: '1', textShadow: '0 2px 20px rgba(0,0,0,0.4)' }}>{destination}</div>
+      </div>
+    </div>
+  );
+}
+
+function PhotoGrid({ query }) {
+  const [photos, setPhotos] = useState([]);
+  const key = process.env.NEXT_PUBLIC_UNSPLASH_ACCESS_KEY;
+
+  useState(() => {
+    fetch(`https://api.unsplash.com/photos/random?query=${encodeURIComponent(query)}&count=3&client_id=${key}`)
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data)) setPhotos(data); })
+      .catch(() => {});
+  });
+
+  if (photos.length === 0) return null;
+
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gridTemplateRows: '240px 240px', gap: '3px', marginBottom: '3px' }}>
+      {photos[0] && (
+        <div style={{ gridRow: '1/3', overflow: 'hidden' }}>
+          <img src={photos[0].urls.regular} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.6s ease' }}
+            onMouseEnter={e => e.target.style.transform='scale(1.04)'} onMouseLeave={e => e.target.style.transform='scale(1)'} />
+        </div>
+      )}
+      {photos[1] && (
+        <div style={{ overflow: 'hidden' }}>
+          <img src={photos[1].urls.regular} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.6s ease' }}
+            onMouseEnter={e => e.target.style.transform='scale(1.04)'} onMouseLeave={e => e.target.style.transform='scale(1)'} />
+        </div>
+      )}
+      {photos[2] && (
+        <div style={{ overflow: 'hidden' }}>
+          <img src={photos[2].urls.regular} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.6s ease' }}
+            onMouseEnter={e => e.target.style.transform='scale(1.04)'} onMouseLeave={e => e.target.style.transform='scale(1)'} />
+        </div>
+      )}
+    </div>
   );
 }
