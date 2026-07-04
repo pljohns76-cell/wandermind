@@ -1,11 +1,29 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function Home() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [journey, setJourney] = useState(null);
   const [error, setError] = useState(null);
+  const [loadingMsg, setLoadingMsg] = useState(0);
+
+  const loadingMessages = [
+    'Reading between your lines...',
+    'Consulting the atlas...',
+    'Weighing hidden coastlines against mountain silence...',
+    'Composing your journey...',
+    'Choosing the light you deserve...',
+  ];
+
+  useEffect(() => {
+    if (!loading) return;
+    setLoadingMsg(0);
+    const timer = setInterval(() => {
+      setLoadingMsg(m => (m + 1) % loadingMessages.length);
+    }, 4500);
+    return () => clearInterval(timer);
+  }, [loading]);
 
   async function discover() {
     if (!input.trim()) return;
@@ -64,6 +82,14 @@ export default function Home() {
           </button>
         </div>
         {error && <div style={{ marginTop: '24px', color: '#c0392b', fontSize: '13px' }}>Error: {error}</div>}
+        {loading && (
+          <div style={{ marginTop: '48px', textAlign: 'center', padding: '40px 0', borderTop: '1px solid #D8D3CB' }}>
+            <div style={{ fontSize: '9px', fontWeight: '600', letterSpacing: '0.3em', textTransform: 'uppercase', color: '#8B7043', marginBottom: '14px' }}>Composing</div>
+            <div style={{ fontFamily: 'Georgia, serif', fontSize: '22px', fontStyle: 'italic', color: '#6B6B6B' }}>
+              {loadingMessages[loadingMsg]}
+            </div>
+          </div>
+        )}
       </section>
 
       {journey && (
@@ -130,6 +156,16 @@ export default function Home() {
           </div>
         </section>
       )}
+
+      <footer style={{ borderTop: '2px solid #0D0D0D', marginTop: '80px', padding: '32px', textAlign: 'center' }}>
+        <div style={{ fontSize: '9px', fontWeight: '600', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#8B7043', marginBottom: '10px' }}>About</div>
+        <p style={{ fontSize: '13px', fontStyle: 'italic', color: '#6B6B6B', maxWidth: '480px', margin: '0 auto 14px' }}>
+          WanderMind is a portfolio project by <a href="https://www.linkedin.com/in/patricia-l-johnson/" target="_blank" rel="noopener noreferrer" style={{ color: '#8B7043', textDecoration: 'underline', textUnderlineOffset: '3px' }}>Pat Johnson</a>, exploring AI-powered discovery.
+        </p>
+        <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#A09080' }}>
+          Next.js · Claude API · Unsplash
+        </div>
+      </footer>
     </main>
   );
 }
