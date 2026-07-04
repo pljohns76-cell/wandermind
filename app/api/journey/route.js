@@ -30,19 +30,20 @@ const SYSTEM_PROMPT = `You are WanderMind, a luxury travel intelligence that dis
   "insight": "2 sentences referencing their words",
   "unsplashQuery": "3-4 word photo search query"
 }`;
-
 export async function POST(request) {
   try {
     const { input } = await request.json();
     if (!input || input.trim().length === 0) {
       return Response.json({ error: 'No input provided' }, { status: 400 });
     }
+
     const message = await client.messages.create({
       model: 'claude-opus-4-6',
       max_tokens: 1500,
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: input }],
     });
+
     const raw = message.content[0].text.trim();
     const start = raw.indexOf('{');
     const end = raw.lastIndexOf('}');
@@ -51,6 +52,30 @@ export async function POST(request) {
     }
     const jsonStr = raw.slice(start, end + 1);
     const journey = JSON.parse(jsonStr);
+
+    // Fetch a photo from Unsplash using the query Claude generated
+    let heroImage = null;
+    let gridImages = [];
+    try {
+      const unsplashRes = await fetch(
+        `https://api.unsplash.com/search/photos?query=${encodeURIComponent(journey.unsplashQuery || journey.destination)}&per_page=4&orientation=landscape`,
+        {
+          headers: {
+            Authorization: `Client-ID ${process.env.UNSPLASH_ACCESS_KEY}`,
+          },
+        }
+      );
+      const unsplashData = await unsplashRes.json();
+      if (!unsplashRes.ok) console.error('Unsplash says:', unsplashRes.status, JSON.stringify(unsplashData));
+      const urls = (unsplashData.results || []).map(p => p.urls.regular);
+      heroImage = urls[0] ?? null;
+      gridImages = urls.slice(1, 4);
+    } catch (e) {
+      console.error('Unsplash error:', e);
+    }
+
+    journey.heroImage = heroImage;
+    journey.gridImages = gridImages;
     return Response.json({ journey });
   } catch (error) {
     console.error('Journey API error:', error);

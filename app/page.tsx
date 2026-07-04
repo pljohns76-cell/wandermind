@@ -28,9 +28,6 @@ export default function Home() {
     }
   }
 
-  const unsplashKey = process.env.NEXT_PUBLIC_UNSPLASH_ACCESS_KEY;
-  const heroPhoto = journey ? `https://api.unsplash.com/photos/random?query=${encodeURIComponent(journey.unsplashQuery || journey.destination)}&orientation=landscape&client_id=${unsplashKey}` : null;
-
   return (
     <main style={{ fontFamily: 'Georgia, serif', background: '#F7F4EF', minHeight: '100vh', color: '#0D0D0D' }}>
       <header style={{ borderBottom: '2px solid #0D0D0D', padding: '16px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
@@ -72,7 +69,7 @@ export default function Home() {
       {journey && (
         <section style={{ maxWidth: '900px', margin: '0 auto', padding: '0 32px 80px' }}>
 
-          <HeroImage query={journey.unsplashQuery || journey.destination} destination={journey.destination} country={journey.country} />
+          <HeroImage src={journey.heroImage} destination={journey.destination} country={journey.country} />
 
           <div style={{ background: '#0D0D0D', color: '#F7F4EF', padding: '40px', marginBottom: '3px' }}>
             <div style={{ fontSize: '9px', fontWeight: '600', letterSpacing: '0.3em', textTransform: 'uppercase', color: '#C4A96D', marginBottom: '8px' }}>{journey.archetypeLabel}</div>
@@ -95,7 +92,7 @@ export default function Home() {
             ))}
           </div>
 
-          <PhotoGrid query={journey.unsplashQuery || journey.destination} />
+          <PhotoGrid photos={journey.gridImages || []} />
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '3px', marginBottom: '3px' }}>
             {(journey.days || []).map((d, i) => (
@@ -137,17 +134,8 @@ export default function Home() {
   );
 }
 
-function HeroImage({ query, destination, country }) {
-  const [src, setSrc] = useState(null);
+function HeroImage({ src, destination, country }) {
   const [loaded, setLoaded] = useState(false);
-  const key = process.env.NEXT_PUBLIC_UNSPLASH_ACCESS_KEY;
-
-  useState(() => {
-    fetch(`https://api.unsplash.com/photos/random?query=${encodeURIComponent(query)}&orientation=landscape&client_id=${key}`)
-      .then(r => r.json())
-      .then(data => { if (data.urls) setSrc(data.urls.regular); })
-      .catch(() => {});
-  });
 
   return (
     <div style={{ position: 'relative', height: '480px', marginBottom: '3px', overflow: 'hidden', background: '#1a1a1a' }}>
@@ -164,36 +152,26 @@ function HeroImage({ query, destination, country }) {
   );
 }
 
-function PhotoGrid({ query }) {
-  const [photos, setPhotos] = useState([]);
-  const key = process.env.NEXT_PUBLIC_UNSPLASH_ACCESS_KEY;
-
-  useState(() => {
-    fetch(`https://api.unsplash.com/photos/random?query=${encodeURIComponent(query)}&count=3&client_id=${key}`)
-      .then(r => r.json())
-      .then(data => { if (Array.isArray(data)) setPhotos(data); })
-      .catch(() => {});
-  });
-
-  if (photos.length === 0) return null;
+function PhotoGrid({ photos }) {
+  if (!photos || photos.length === 0) return null;
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gridTemplateRows: '240px 240px', gap: '3px', marginBottom: '3px' }}>
       {photos[0] && (
         <div style={{ gridRow: '1/3', overflow: 'hidden' }}>
-          <img src={photos[0].urls.regular} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.6s ease' }}
+          <img src={photos[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.6s ease' }}
             onMouseEnter={e => e.target.style.transform='scale(1.04)'} onMouseLeave={e => e.target.style.transform='scale(1)'} />
         </div>
       )}
       {photos[1] && (
         <div style={{ overflow: 'hidden' }}>
-          <img src={photos[1].urls.regular} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.6s ease' }}
+          <img src={photos[1]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.6s ease' }}
             onMouseEnter={e => e.target.style.transform='scale(1.04)'} onMouseLeave={e => e.target.style.transform='scale(1)'} />
         </div>
       )}
       {photos[2] && (
         <div style={{ overflow: 'hidden' }}>
-          <img src={photos[2].urls.regular} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.6s ease' }}
+          <img src={photos[2]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.6s ease' }}
             onMouseEnter={e => e.target.style.transform='scale(1.04)'} onMouseLeave={e => e.target.style.transform='scale(1)'} />
         </div>
       )}
