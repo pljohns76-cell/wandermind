@@ -57,17 +57,28 @@ export async function POST(request) {
     let heroImage = null;
     let gridImages = [];
     try {
-      const unsplashRes = await fetch(
-        `https://api.unsplash.com/search/photos?query=${encodeURIComponent(journey.unsplashQuery || journey.destination)}&per_page=4&orientation=landscape`,
-        {
-          headers: {
-            Authorization: `Client-ID ${process.env.UNSPLASH_ACCESS_KEY}`,
-          },
-        }
-      );
-      const unsplashData = await unsplashRes.json();
-      if (!unsplashRes.ok) console.error('Unsplash says:', unsplashRes.status, JSON.stringify(unsplashData));
-      const urls = (unsplashData.results || []).map(p => p.urls.regular);
+      const searchUnsplash = async (q, count) => {
+        const res = await fetch(
+          `https://api.unsplash.com/search/photos?query=${encodeURIComponent(q)}&per_page=${count}&orientation=landscape`,
+          { headers: { Authorization: `Client-ID ${process.env.UNSPLASH_ACCESS_KEY}` } }
+        );
+        const data = await res.json();
+        if (!res.ok) console.error('Unsplash says:', res.status, JSON.stringify(data));
+        return (data.results || []).map(p => p.urls.regular);
+      };
+
+      let urls = await searchUnsplash(journey.unsplashQuery || journey.destination, 10);
+
+      // If too few results, top up with a broader search
+      if (urls.length < 4) {
+        const backup = await searchUnsplash(`${journey.destination} ${journey.country}`, 10);
+        urls = [...urls, ...backup.filter(u => !urls.includes(u))];
+      }
+      if (urls.length < 4) {
+        const backup2 = await searchUnsplash(`${journey.country} travel`, 10);
+        urls = [...urls, ...backup2.filter(u => !urls.includes(u))];
+      }
+
       heroImage = urls[0] ?? null;
       gridImages = urls.slice(1, 4);
     } catch (e) {
