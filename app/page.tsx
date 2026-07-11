@@ -188,6 +188,9 @@ const [shareMsg, setShareMsg] = useState('');
         <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#A09080' }}>
           Next.js · Claude API · Unsplash
         </div>
+        <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#A09080', marginTop: '6px' }}>
+  © 2026 Pat Johnson. All rights reserved.
+</div>
       </footer>
     </main>
   );
@@ -234,6 +237,6 @@ function PhotoGrid({ photos }) {
             onMouseEnter={e => e.target.style.transform='scale(1.04)'} onMouseLeave={e => e.target.style.transform='scale(1)'} />
         </div>
       )}
-    </div>
+    </div>    
   );
 }
